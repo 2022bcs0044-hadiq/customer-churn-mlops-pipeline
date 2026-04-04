@@ -1,9 +1,12 @@
 from pydantic import BaseModel
 
-class PredictionRequest(BaseModel):
-    # Add input features
-    pass
-
-class PredictionResponse(BaseModel):
-    churn_probability: float
-    churn_prediction: int
+class CustomerData(BaseModel):
+    gender: int
+    SeniorCitizen: int
+    Partner: int
+    Dependents: int
+    tenure: int
+    PhoneService: int
+    PaperlessBilling: int
+    MonthlyCharges: float
+    TotalCharges: float

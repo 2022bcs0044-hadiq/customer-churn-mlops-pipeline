@@ -1,4 +1,9 @@
 [core]
-    remote = s3store
+    remote = myremote
 ['remote "s3store"']
     url = s3://my-dvc-bucket/churn-mlops
+['remote "myremote"']
+    url = s3://churn-mlops-dvc-bucket
+    access_key_id = REMOVED_KEY_ID
+    secret_access_key = REMOVED_SECRET
+    (credential removed)
