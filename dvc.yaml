@@ -1,34 +1,42 @@
 stages:
-  ingest_data:
+  ingest:
     cmd: python src/data/ingest_data.py
     deps:
-    - src/data/ingest_data.py
+      - data/raw/telco_churn_v1.csv
+      - src/data/ingest_data.py
     outs:
-    - data/raw/telco_churn.csv
+      - data/processed/cleaned.csv
 
-  build_features:
+  features:
     cmd: python src/features/build_features.py
     deps:
-    - src/features/build_features.py
-    - data/raw/telco_churn.csv
+      - data/processed/cleaned.csv
+      - src/features/build_features.py
     outs:
-    - data/processed/X_train.csv
-    - data/processed/X_test.csv
-    - data/processed/y_train.csv
-    - data/processed/y_test.csv
+      - data/processed/X_train.csv
+      - data/processed/X_test.csv
+      - data/processed/y_train.csv
+      - data/processed/y_test.csv
 
-  train_model:
+  train:
     cmd: python src/models/train_model.py
     deps:
-    - src/models/train_model.py
-    - data/processed/X_train.csv
-    - data/processed/y_train.csv
+      - data/processed/X_train.csv
+      - data/processed/y_train.csv
+      - src/models/train_model.py
     outs:
-    - mlruns/
+      - models/churn_model.pkl
+      - models/scaler.pkl
+      - models/threshold.json
+    metrics:
+      - metrics/train_scores.json
 
-  evaluate_model:
+  evaluate:
     cmd: python src/models/evaluate_model.py
     deps:
-    - src/models/evaluate_model.py
-    - data/processed/X_test.csv
-    - data/processed/y_test.csv
+      - models/churn_model.pkl
+      - data/processed/X_test.csv
+      - data/processed/y_test.csv
+      - src/models/evaluate_model.py
+    metrics:
+      - metrics/test_scores.json
