@@ -2,51 +2,60 @@ name: MLOps Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  train-and-build:
+  train:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.10
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install dvc[s3]
 
-      - name: Install DVC
-        run: |
-          pip install dvc[s3]
+    - name: Configure AWS credentials
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
+        aws configure set region us-east-1
 
-      - name: Configure AWS Credentials
-        run: |
-          dvc remote modify myremote access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          dvc remote modify myremote secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Pull data from DVC
+      run: dvc pull
 
-      - name: Pull data from DVC
-        run: |
-          dvc pull
+    - name: Run DVC pipeline
+      run: dvc repro
 
-      - name: Run DVC Pipeline
-        run: |
-          dvc repro
+    - name: Display metrics
+      run: |
+        echo "## Training Metrics" >> $GITHUB_STEP_SUMMARY
+        cat metrics/train_scores.json >> $GITHUB_STEP_SUMMARY
+        echo "## Test Metrics" >> $GITHUB_STEP_SUMMARY
+        cat metrics/test_scores.json >> $GITHUB_STEP_SUMMARY
 
-      - name: Log in to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+    - name: Upload metrics artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: metrics
+        path: metrics/
 
-      - name: Build Docker Image
-        run: |
-          docker build -t 2022bcs0044hadiqc/churn-mlops .
+    - name: Run tests
+      run: PYTHONPATH=. pytest tests/ -v
 
-      - name: Push Docker Image
-        run: |
-          docker push 2022bcs0044hadiqc/churn-mlops
+    - name: Build Docker image
+      run: docker build -t 2022bcs0044hadiqc/churn-mlops .
+
+    - name: Login to DockerHub
+      run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+    - name: Push Docker image
+      run: docker push 2022bcs0044hadiqc/churn-mlops
