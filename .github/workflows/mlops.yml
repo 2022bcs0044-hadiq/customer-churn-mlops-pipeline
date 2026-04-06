@@ -31,11 +31,8 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: us-east-1
 
-    - name: Pull data from DVC
-      run: dvc pull
-
     - name: Run DVC pipeline
-      run: dvc repro
+      run: dvc repro --force
 
     - name: Run tests
       run: PYTHONPATH=. pytest tests/ -v

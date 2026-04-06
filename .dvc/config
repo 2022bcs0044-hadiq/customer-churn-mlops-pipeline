@@ -1,5 +1,5 @@
 [core]
     remote = s3store
 ['remote "s3store"']
-    url = s3://churn-mlops-dvc-bucket/churn-mlops
+    url = s3://churn-mlops-dvc-bcs44/churn-mlops
     region = us-east-1

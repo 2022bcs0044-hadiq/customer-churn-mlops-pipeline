@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 venv/
 __pycache__/
 *.pyc
@@ -6,6 +6,7 @@ __pycache__/
 
 # Data & Models (managed by DVC)
 data/
+!data/raw/telco_churn_v1.csv
 models/
 metrics/
 mlruns/
