@@ -25,8 +25,8 @@ stages:
       size: 846793
     - path: src/features/build_features.py
       hash: md5
-      md5: 18d0f43cb00660cbd358a58bd505105a
-      size: 1330
+      md5: 412f708339f345b901a64a332929ff5a
+      size: 1329
     outs:
     - path: data/processed/X_test.csv
       hash: md5
