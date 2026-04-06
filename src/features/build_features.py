@@ -36,7 +36,7 @@ def save_data(X_train, X_test, y_train, y_test):
     y_test.to_csv("data/processed/y_test.csv", index=False)
 
 def main():
-    df = load_data("data/raw/telco_churn_v2.csv")
+    df = load_data("data/processed/cleaned.csv")
     X, y = feature_engineering(df)
     X_train, X_test, y_train, y_test = split_data(X, y)
     save_data(X_train, X_test, y_train, y_test)
