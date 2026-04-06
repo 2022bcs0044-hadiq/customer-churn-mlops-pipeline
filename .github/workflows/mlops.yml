@@ -15,19 +15,18 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.10"
 
     - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install dvc[s3]
+      run: pip install -r requirements.txt
 
     - name: Configure AWS credentials
-      run: |
-        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws configure set aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
-        aws configure set region us-east-1
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: us-east-1
 
     - name: Pull data from DVC
       run: dvc pull
@@ -35,21 +34,21 @@ jobs:
     - name: Run DVC pipeline
       run: dvc repro
 
+    - name: Run tests
+      run: PYTHONPATH=. pytest tests/ -v
+
     - name: Display metrics
       run: |
         echo "## Training Metrics" >> $GITHUB_STEP_SUMMARY
-        cat metrics/train_scores.json >> $GITHUB_STEP_SUMMARY
+        cat metrics/train_scores.json >> $GITHUB_STEP_SUMMARY || echo "train_scores.json not found" >> $GITHUB_STEP_SUMMARY
         echo "## Test Metrics" >> $GITHUB_STEP_SUMMARY
-        cat metrics/test_scores.json >> $GITHUB_STEP_SUMMARY
+        cat metrics/test_scores.json >> $GITHUB_STEP_SUMMARY || echo "test_scores.json not found" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload metrics artifact
       uses: actions/upload-artifact@v4
       with:
         name: metrics
         path: metrics/
-
-    - name: Run tests
-      run: PYTHONPATH=. pytest tests/ -v
 
     - name: Build Docker image
       run: docker build -t 2022bcs0044hadiqc/churn-mlops .
