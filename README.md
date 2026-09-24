@@ -18,6 +18,7 @@ An end-to-end, production-grade Machine Learning Operations (MLOps) pipeline for
 - [Key Features & Tech Stack](#-key-features--tech-stack)
 - [Installation & Setup](#-installation--setup)
 - [ML Pipeline (DVC)](#-ml-pipeline-dvc)
+- [Model Performance & Metrics](#-model-performance--metrics)
 - [Experiment Tracking (MLflow)](#-experiment-tracking-mlflow)
 - [Serving with FastAPI](#-serving-with-fastapi)
 - [Docker & Docker Compose](#-docker--docker-compose)
@@ -212,6 +213,31 @@ dvc pull
 # Push newly produced data/model versions to S3
 dvc push
 ```
+
+---
+
+## 📈 Model Performance & Metrics
+
+The model was evaluated on the held-out test split of **1,407 customers** (20% test partition).
+
+### Benchmark Scores
+
+| Metric | Score | Description |
+| :--- | :---: | :--- |
+| **ROC-AUC** | **`0.827` (82.7%)** | Primary ranking metric measuring discrimination ability across all thresholds. |
+| **Recall (Churn Class)** | **`78.34%`** | **293 out of 374 actual churners caught** — minimizes costly False Negatives. |
+| **F1-Score** | **`0.612`** | Harmonic mean of Precision (50.17%) and Recall (78.34%). |
+| **Accuracy** | **`73.56%`** | Overall classification accuracy on unseen test data. |
+
+### Confusion Matrix (Test Split: 1,407 Samples)
+
+| | Predicted: Retained (0) | Predicted: Churned (1) | Total Actual |
+| :--- | :---: | :---: | :---: |
+| **Actual: Retained (0)** | **742** (True Negative) | **291** (False Positive) | 1,033 |
+| **Actual: Churned (1)** | **81** (False Negative) | **293** (True Positive) | 374 |
+| **Total Predicted** | 823 | 584 | **1,407** |
+
+> **Business Impact Insight**: The retention campaign prioritizes **Recall (78.3%)** over precision because the business cost of a missed churner (losing \$500–\$1,000+ in annual Customer Lifetime Value) far outweighs the marginal cost of offering a retention discount to a False Positive.
 
 ---
 
