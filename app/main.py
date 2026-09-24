@@ -3,7 +3,11 @@ import pandas as pd
 from app.model_loader import get_model_components
 from app.schemas import CustomerData
 
-app = FastAPI(title="Customer Churn Prediction API")
+app = FastAPI(
+    title="Customer Churn Prediction API",
+    description="Production-ready real-time inference API for predicting customer churn probability.",
+    version="1.1.0",
+)
 
 # Lazy-loaded model components — loaded on first request, not at import time
 _model = None
@@ -26,29 +30,37 @@ def _load_components():
 
 @app.get("/")
 def home():
-    return {"message": "Customer Churn Prediction API is running"}
+    return {
+        "message": "Customer Churn Prediction API is running",
+        "status": "healthy",
+        "version": "1.1.0"
+    }
 
 
 @app.post("/predict")
 def predict(data: CustomerData):
     _load_components()
 
-    df = pd.DataFrame([data.dict()])
+    # Convert Pydantic model to dict, then DataFrame
+    raw_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
+    df_raw = pd.DataFrame([raw_dict])
 
-    # Add missing columns with default 0
-    for col in _feature_names:
-        if col not in df.columns:
-            df[col] = 0
+    # Perform one-hot encoding on categorical fields
+    df_encoded = pd.get_dummies(df_raw, dtype=int)
 
-    # Ensure same column order as training
-    df = df[_feature_names]
+    # Reindex to exact 41 feature columns learned during training, filling absent columns with 0
+    df_aligned = df_encoded.reindex(columns=_feature_names, fill_value=0).astype(float)
 
-    # Scale and predict
-    X_scaled = _scaler.transform(df)
-    prob = _model.predict_proba(X_scaled)[0][1]
+    # Scale features using the persisted training StandardScaler
+    X_scaled = _scaler.transform(df_aligned)
+
+    # Predict churn probability
+    prob = float(_model.predict_proba(X_scaled)[0][1])
     prediction = int(prob >= _threshold)
 
     return {
-        "churn_probability": float(prob),
+        "churn_probability": round(prob, 4),
         "prediction": prediction,
+        "risk_level": "High" if prob >= _threshold else "Low",
+        "threshold_used": _threshold,
     }
